@@ -1,1 +1,1 @@
-# freestyle_pulse_optimization
+# FreestylePulseOptimization
