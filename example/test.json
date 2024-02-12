@@ -1,0 +1,70 @@
+{
+    "$schema": "./schemas/runtime-schema.json",
+    "ibm-runtime": {
+        "backend-name": "least_busy",
+        "service-name": "ibm_quantum",
+        "instance": "ibm-q/open/main",
+        "qubits": [
+            0, 1, 2
+        ]
+    },
+    "ci-matrix": {
+        "directory": "example/data/LiH_dist/",
+        "nq": 8
+    },
+    "iq": {
+        "run": true,
+        "output-directory": "final-results/measure-test-LiH4/iq",
+        "slice": {
+            "start": null,
+            "stop": null,
+            "step": null
+        },
+        "measure-x": true,
+        "shots": 150000,
+        "fig-shots": 5000,
+        "01-freq-hunt": {
+            "start": -60.0,
+            "stop": 60.0,
+            "units": "MHz",
+            "number": 60
+        },
+        "01-amp-hunt": {
+            "start": -0.5,
+            "stop": 0.5,
+            "number": 60
+        },
+        "12-freq-hunt": {
+            "start": -45.0,
+            "stop": 45.0,
+            "units": "MHz",
+            "number": 60
+        },
+        "12-amp-hunt": {
+            "start": -0.5,
+            "stop": 0.5,
+            "number": 60
+        }
+    },
+    "output-directory": "final-results/measure-test-LiH4",
+    "live-feed-file": "final-results/measure-test-LiH4/live.csv",
+    "optimizer": {
+        "options": {
+            "rhobeg": 0.05,
+            "maxiter": 120,
+            "disp": true
+        },
+        "tol": 5e-08
+    },
+    "verbose": true,
+    "parameters": [
+        {
+            "Nt": 10,
+            "additional-data": {"order": "d1_u3_d2_u3_d1" },
+            "phys-to-logical": 100,
+            "distance": 1.5,
+            "total-shots": 1500,
+            "padding": 2
+        }
+    ]
+}

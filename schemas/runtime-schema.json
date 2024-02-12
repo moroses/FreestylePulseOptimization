@@ -1,0 +1,330 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "runtime-over-specific",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "ibm-runtime": {
+      "type": "object",
+      "properties": {
+        "backend-name": {
+          "type": "string"
+        },
+        "service-name": {
+          "type": "string"
+        },
+        "instance": {
+          "type": "string"
+        },
+        "qubits": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "integer"
+          }
+        },
+        "token-file": {
+          "type": "string"
+        },
+        "custom-x": {
+                "type": "object",
+                "default": null,
+                "properties": {
+                        "freq": {
+                                "$ref": "#/$defs/freqHunt"
+                        },
+                        "amp": {
+                                "$ref": "#/$defs/ampHunt"
+                        },
+                        "shots": {
+                                "type":"integer",
+                                "exclusiveMinimum": 0,
+                                "default": 1024
+                        }
+                },
+                "required": ["freq", "amp"],
+                "additionalProperties": false
+        }
+      },
+      "required": [
+        "backend-name",
+        "service-name",
+        "qubits"
+      ],
+      "additionalProperties": false
+    },
+    "iq": {
+      "type": "object",
+      "properties": {
+        "run": {
+          "type": "boolean",
+          "default": false
+        },
+        "output-directory": {
+                "type": "string",
+                "default": "./leak-test/"
+        },
+        "slice": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type":[ "integer","null"],
+              "default": -1
+            },
+            "stop": {
+              "type":[ "integer","null"],
+              "default": -16
+            },
+            "step": {
+              "type":[ "integer","null"],
+              "default": -1
+            }
+          },
+          "additionalProperties": false
+        },
+        "measure-x": {
+                "type": "boolean",
+                "default": true
+        },
+        "01-freq-hunt": {
+                "$ref": "#/$defs/freqHunt"
+        },
+        "01-amp-hunt": {
+                "$ref": "#/$defs/ampHunt"
+        },
+        "12-freq-hunt": {
+                "$ref": "#/$defs/freqHunt"
+        },
+        "12-amp-hunt": {
+                "$ref": "#/$defs/ampHunt"
+        },
+        "shots": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "movie-types": {
+                "type": "array",
+                "items": {
+                        "type": "string",
+                        "enum": ["mp4", "gif"]
+                },
+                "minItems": 1
+        },
+        "fig-shots": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "default": 5000
+        },
+        "base-factors": {
+                "type": "object",
+                "additionalProperties": {
+                        "$ref": "#/$defs/baseFactors"
+                }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ci-matrix": {
+      "type": "object",
+      "properties": {
+        "directory": {
+          "type": "string"
+        },
+        "nq": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "directory",
+        "nq"
+      ],
+      "additionalProperties": false
+    },
+    "verbose": {
+      "type": "boolean",
+      "default": false
+    },
+    "output-directory": {
+      "type": "string"
+    },
+    "live-feed-file": {
+      "type": "string"
+    },
+    "stop-file": {
+      "type": "string"
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/parameter-set"
+      },
+      "minItems": 1
+    },
+    "reservation": {
+      "$ref": "#/$defs/datetime"
+    },
+    "optimizer": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "parameters",
+    "ibm-runtime",
+    "ci-matrix",
+    "output-directory"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+          "baseFactors": {
+                  "type": "object",
+                  "properties": {
+                          "func": {
+                                  "type": "string",
+                                  "enum": ["+", "-", "*", "/", "="],
+                                  "default": "+"
+                          },
+                          "value": {
+                                  "type": "number",
+                                  "default": 1.0
+                          }
+                  },
+                  "additionalProperties": false
+          },
+          "ampHunt": {
+                  "type": "object",
+          "properties": {
+            "start": {
+              "type": "number",
+              "default": 0.01
+            },
+            "stop": {
+              "type": "number",
+              "default": 1
+            },
+            "number": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "default": 60
+            }
+          },
+          "additionalProperties": false
+          },
+          "freqHunt": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "number",
+              "default": -30
+            },
+            "stop": {
+              "type": "number",
+              "default": 30
+            },
+            "units": {
+              "$ref": "#/$defs/Hz",
+              "default": "MHz"
+            },
+            "number": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "default": 60
+            }
+          },
+          "additionalProperties": false
+          },
+    "Hz": {
+      "type": "string",
+      "enum": [
+        "yHz",
+        "zHz",
+        "aHz",
+        "fHz",
+        "pHz",
+        "nHz",
+        "μHz",
+        "mHz",
+        "Hz",
+        "kHz",
+        "MHz",
+        "GHz",
+        "THz",
+        "PHz",
+        "EHz",
+        "ZHz",
+        "YHz"
+      ]
+    },
+    "parameter-set": {
+      "type": "object",
+      "properties": {
+        "Nt": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "padding": {
+          "type": "integer",
+          "enum": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "total-shots": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "distance": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "phys-to-logical": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 1
+        },
+        "additional-data": {
+                "type": "object",
+                "properties": {
+                        "order": {
+                                "type": "string"
+                        }
+                },
+                "required": ["order"]
+        }
+      },
+      "required": [
+        "Nt",
+        "padding",
+        "total-shots",
+        "distance"
+      ],
+      "additionalProperties": false
+    },
+    "datetime": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "integer"
+        },
+        "month": {
+          "type": "integer"
+        },
+        "day": {
+          "type": "integer"
+        },
+        "hour": {
+          "type": "integer"
+        },
+        "minute": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
