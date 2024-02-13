@@ -2,44 +2,55 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "runtime-over-specific",
   "type": "object",
+  "description": "Experiments parameters for VQE",
   "properties": {
     "$schema": {
       "type": "string"
     },
     "ibm-runtime": {
       "type": "object",
+      "description": "The specification of the IBM connection",
       "properties": {
         "backend-name": {
-          "type": "string"
+          "type": "string",
+          "description": "Backend name, can be 'least_busy' to select the least busy"
         },
         "service-name": {
-          "type": "string"
+          "type": "string",
+          "description": "Service name, typically 'ibm_quantum'"
         },
         "instance": {
-          "type": "string"
+          "type": "string",
+          "description": "Instance descriptor, typically 'ibm-q/open/main'"
         },
         "qubits": {
           "type": "array",
+          "description": "Indices of the qubits to use",
           "minItems": 1,
           "items": {
             "type": "integer"
           }
         },
         "token-file": {
-          "type": "string"
+          "type": "string",
+          "description": "The location of a file containing the API token to IBM's services"
         },
         "custom-x": {
                 "type": "object",
+                "description": "Definition of a custom X gate",
                 "default": null,
                 "properties": {
                         "freq": {
-                                "$ref": "#/$defs/freqHunt"
+                                "$ref": "#/$defs/freqHunt",
+                                "description": "The frequency range to calibrate the gate"
                         },
                         "amp": {
-                                "$ref": "#/$defs/ampHunt"
+                                "$ref": "#/$defs/ampHunt",
+                                "description": "The amplitude range to calibrate the gate"
                         },
                         "shots": {
                                 "type":"integer",
+                                "description": "The number shots to calibrate with",
                                 "exclusiveMinimum": 0,
                                 "default": 1024
                         }
@@ -57,55 +68,69 @@
     },
     "iq": {
       "type": "object",
+      "description": "IQ measurements specifications",
       "properties": {
         "run": {
           "type": "boolean",
+          "description": "Should execute IQ measurements?",
           "default": false
         },
         "output-directory": {
                 "type": "string",
-                "default": "./leak-test/"
+                "default": "./leak-test/",
+                "description": "Output directory for the IQ results (deprecated)"
         },
         "slice": {
           "type": "object",
+          "description": "The slice from the executed iterations to measure IQ for",
           "properties": {
             "start": {
               "type":[ "integer","null"],
-              "default": -1
+              "default": -1,
+              "description": "Starting point"
             },
             "stop": {
               "type":[ "integer","null"],
-              "default": -16
+              "default": -16,
+              "description": "Stopping point"
             },
             "step": {
               "type":[ "integer","null"],
-              "default": -1
+              "default": -1,
+              "description": "Step size"
             }
           },
           "additionalProperties": false
         },
         "measure-x": {
                 "type": "boolean",
+                "description": "Measure the IQ for the X observable (deprecated)",
                 "default": true
         },
         "01-freq-hunt": {
-                "$ref": "#/$defs/freqHunt"
+                "$ref": "#/$defs/freqHunt",
+                "description": "Frequency specification for the 0 -> 1 transition"
         },
         "01-amp-hunt": {
-                "$ref": "#/$defs/ampHunt"
+                "$ref": "#/$defs/ampHunt",
+                "description": "Amplitude specification for the 0 -> 1 transition"
         },
         "12-freq-hunt": {
-                "$ref": "#/$defs/freqHunt"
+                "$ref": "#/$defs/freqHunt",
+                "description": "Frequency specification for the 1 -> 2 transition"
         },
         "12-amp-hunt": {
-                "$ref": "#/$defs/ampHunt"
+                "$ref": "#/$defs/ampHunt",
+                "description": "Amplitude specification for the 1 -> 2 transition"
         },
         "shots": {
           "type": "integer",
+          "description": "Number of shots",
           "exclusiveMinimum": 0
         },
         "movie-types": {
                 "type": "array",
+                "description": "Output movie types (experimental)",
                 "items": {
                         "type": "string",
                         "enum": ["mp4", "gif"]
@@ -114,11 +139,13 @@
         },
         "fig-shots": {
                 "type": "integer",
+                "description": "Figure mesh size",
                 "exclusiveMinimum": 0,
                 "default": 5000
         },
         "base-factors": {
                 "type": "object",
+                "description": "Control specific features of the pulse used to transition from i -> f (experimental)",
                 "additionalProperties": {
                         "$ref": "#/$defs/baseFactors"
                 }
@@ -128,12 +155,15 @@
     },
     "ci-matrix": {
       "type": "object",
+      "description": "Specification of the location of the CI matrices location",
       "properties": {
         "directory": {
-          "type": "string"
+          "type": "string",
+          "description": "Base directory of CI matrices"
         },
         "nq": {
           "type": "integer",
+          "description": "Space size, should be equal to `2^n_qubits`",
           "exclusiveMinimum": 0
         }
       },
@@ -145,29 +175,36 @@
     },
     "verbose": {
       "type": "boolean",
+      "description": "Should the output be verbose?",
       "default": false
     },
     "output-directory": {
-      "type": "string"
+      "type": "string",
+      "description": "Base output directory"
     },
     "live-feed-file": {
-      "type": "string"
+      "type": "string",
+      "description": "Location of live feed file (CSV file with raw data)"
     },
     "stop-file": {
-      "type": "string"
+      "type": "string",
+      "description": "Location of emergency stop file (if file exists, stop running)"
     },
     "parameters": {
       "type": "array",
+      "description": "Parameter specification array",
       "items": {
         "$ref": "#/$defs/parameter-set"
       },
       "minItems": 1
     },
     "reservation": {
-      "$ref": "#/$defs/datetime"
+      "$ref": "#/$defs/datetime",
+      "description": "If a reservation exists, specify the date and time"
     },
     "optimizer": {
       "type": "object",
+      "description": "Arguments to pass to the optimizer (currently COBYLA)",
       "additionalProperties": true
     }
   },
@@ -181,14 +218,17 @@
   "$defs": {
           "baseFactors": {
                   "type": "object",
+                  "description": "Functions to apply on pulse shape parameters",
                   "properties": {
                           "func": {
                                   "type": "string",
+                                  "description": "Base two argument function to apply",
                                   "enum": ["+", "-", "*", "/", "="],
                                   "default": "+"
                           },
                           "value": {
                                   "type": "number",
+                                  "description": "The second argument to pass to the function",
                                   "default": 1.0
                           }
                   },
@@ -196,17 +236,21 @@
           },
           "ampHunt": {
                   "type": "object",
+                  "description": "Amplitude range specification",
           "properties": {
             "start": {
               "type": "number",
+              "description": "Starting amplitude",
               "default": 0.01
             },
             "stop": {
               "type": "number",
+              "description": "Stopping amplitude",
               "default": 1
             },
             "number": {
               "type": "integer",
+              "description": "Number of amplitudes",
               "exclusiveMinimum": 0,
               "default": 60
             }
@@ -215,21 +259,26 @@
           },
           "freqHunt": {
           "type": "object",
+          "description": "Frequency offset range specification",
           "properties": {
             "start": {
               "type": "number",
+              "description": "Initial frequency offset",
               "default": -30
             },
             "stop": {
               "type": "number",
+              "description": "Final frequency offset",
               "default": 30
             },
             "units": {
+                    "description": "Frequency unit",
               "$ref": "#/$defs/Hz",
               "default": "MHz"
             },
             "number": {
               "type": "integer",
+              "description": "Number of frequency offsets",
               "exclusiveMinimum": 0,
               "default": 60
             }
@@ -238,6 +287,7 @@
           },
     "Hz": {
       "type": "string",
+      "description": "SI frequency units",
       "enum": [
         "yHz",
         "zHz",
@@ -260,13 +310,16 @@
     },
     "parameter-set": {
       "type": "object",
+      "description": "Parameter specification",
       "properties": {
         "Nt": {
           "type": "integer",
+          "description": "Number of parameters to use",
           "exclusiveMinimum": 0
         },
         "padding": {
           "type": "integer",
+          "description": "Padding type, 1 -> No, 2 -> LEFT, 3 -> RIGHT, 4 -> MIDDLE",
           "enum": [
             1,
             2,
@@ -276,22 +329,27 @@
         },
         "total-shots": {
           "type": "integer",
+          "description": "Number of shots",
           "exclusiveMinimum": 0
         },
         "distance": {
           "type": "number",
+          "description": "Inter-atomic distance",
           "exclusiveMinimum": 0
         },
         "phys-to-logical": {
           "type": "integer",
+          "description": "Multiplier of each time-slot",
           "exclusiveMinimum": 0,
           "default": 1
         },
         "additional-data": {
                 "type": "object",
+                "description": "Experimental options",
                 "properties": {
                         "order": {
-                                "type": "string"
+                                "type": "string",
+                                "description": "Specific channel order. Each slot is separated by a '_'. Channel type is (1) 'a' - all, (2) 'd' - drive, and (3) 'u' - control. The channel type is followed by a number, the number of time-slots to use."
                         }
                 },
                 "required": ["order"]
@@ -307,21 +365,27 @@
     },
     "datetime": {
       "type": "object",
+      "description": "Date and time object (without timezone information). Each missing value is taken from now().",
       "properties": {
         "year": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Year"
         },
         "month": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Month"
         },
         "day": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Day"
         },
         "hour": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Hour"
         },
         "minute": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Minute"
         }
       },
       "additionalProperties": false

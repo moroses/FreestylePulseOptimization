@@ -69,19 +69,21 @@
 | **Required**              | No                                                      |
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 
-| Property                                 | Pattern | Type    | Deprecated | Definition          | Title/Description |
-| ---------------------------------------- | ------- | ------- | ---------- | ------------------- | ----------------- |
-| - [$schema](#schema )                    | No      | string  | No         | -                   | -                 |
-| + [ibm-runtime](#ibm-runtime )           | No      | object  | No         | -                   | -                 |
-| - [iq](#iq )                             | No      | object  | No         | -                   | -                 |
-| + [ci-matrix](#ci-matrix )               | No      | object  | No         | -                   | -                 |
-| - [verbose](#verbose )                   | No      | boolean | No         | -                   | -                 |
-| + [output-directory](#output-directory ) | No      | string  | No         | -                   | -                 |
-| - [live-feed-file](#live-feed-file )     | No      | string  | No         | -                   | -                 |
-| - [stop-file](#stop-file )               | No      | string  | No         | -                   | -                 |
-| + [parameters](#parameters )             | No      | array   | No         | -                   | -                 |
-| - [reservation](#reservation )           | No      | object  | No         | In #/$defs/datetime | -                 |
-| - [optimizer](#optimizer )               | No      | object  | No         | -                   | -                 |
+**Description:** Experiments parameters for VQE
+
+| Property                                 | Pattern | Type    | Deprecated | Definition          | Title/Description                                              |
+| ---------------------------------------- | ------- | ------- | ---------- | ------------------- | -------------------------------------------------------------- |
+| - [$schema](#schema )                    | No      | string  | No         | -                   | -                                                              |
+| + [ibm-runtime](#ibm-runtime )           | No      | object  | No         | -                   | The specification of the IBM connection                        |
+| - [iq](#iq )                             | No      | object  | No         | -                   | IQ measurements specifications                                 |
+| + [ci-matrix](#ci-matrix )               | No      | object  | No         | -                   | Specification of the location of the CI matrices location      |
+| - [verbose](#verbose )                   | No      | boolean | No         | -                   | Should the output be verbose?                                  |
+| + [output-directory](#output-directory ) | No      | string  | No         | -                   | Base output directory                                          |
+| - [live-feed-file](#live-feed-file )     | No      | string  | No         | -                   | Location of live feed file (CSV file with raw data)            |
+| - [stop-file](#stop-file )               | No      | string  | No         | -                   | Location of emergency stop file (if file exists, stop running) |
+| + [parameters](#parameters )             | No      | array   | No         | -                   | Parameter specification array                                  |
+| - [reservation](#reservation )           | No      | object  | No         | In #/$defs/datetime | If a reservation exists, specify the date and time             |
+| - [optimizer](#optimizer )               | No      | object  | No         | -                   | Arguments to pass to the optimizer (currently COBYLA)          |
 
 ## <a name="schema"></a>1. Property `root > $schema`
 
@@ -98,14 +100,16 @@
 | **Required**              | Yes                                                     |
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 
-| Property                                     | Pattern | Type             | Deprecated | Definition | Title/Description |
-| -------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [backend-name](#ibm-runtime_backend-name ) | No      | string           | No         | -          | -                 |
-| + [service-name](#ibm-runtime_service-name ) | No      | string           | No         | -          | -                 |
-| - [instance](#ibm-runtime_instance )         | No      | string           | No         | -          | -                 |
-| + [qubits](#ibm-runtime_qubits )             | No      | array of integer | No         | -          | -                 |
-| - [token-file](#ibm-runtime_token-file )     | No      | string           | No         | -          | -                 |
-| - [custom-x](#ibm-runtime_custom-x )         | No      | object           | No         | -          | -                 |
+**Description:** The specification of the IBM connection
+
+| Property                                     | Pattern | Type             | Deprecated | Definition | Title/Description                                                 |
+| -------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------------------------------------------------------- |
+| + [backend-name](#ibm-runtime_backend-name ) | No      | string           | No         | -          | Backend name, can be 'least_busy' to select the least busy        |
+| + [service-name](#ibm-runtime_service-name ) | No      | string           | No         | -          | Service name, typically 'ibm_quantum'                             |
+| - [instance](#ibm-runtime_instance )         | No      | string           | No         | -          | Instance descriptor, typically 'ibm-q/open/main'                  |
+| + [qubits](#ibm-runtime_qubits )             | No      | array of integer | No         | -          | Indices of the qubits to use                                      |
+| - [token-file](#ibm-runtime_token-file )     | No      | string           | No         | -          | The location of a file containing the API token to IBM's services |
+| - [custom-x](#ibm-runtime_custom-x )         | No      | object           | No         | -          | Definition of a custom X gate                                     |
 
 ### <a name="ibm-runtime_backend-name"></a>2.1. Property `root > ibm-runtime > backend-name`
 
@@ -114,12 +118,16 @@
 | **Type**     | `string` |
 | **Required** | Yes      |
 
+**Description:** Backend name, can be 'least_busy' to select the least busy
+
 ### <a name="ibm-runtime_service-name"></a>2.2. Property `root > ibm-runtime > service-name`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | Yes      |
+
+**Description:** Service name, typically 'ibm_quantum'
 
 ### <a name="ibm-runtime_instance"></a>2.3. Property `root > ibm-runtime > instance`
 
@@ -128,12 +136,16 @@
 | **Type**     | `string` |
 | **Required** | No       |
 
+**Description:** Instance descriptor, typically 'ibm-q/open/main'
+
 ### <a name="ibm-runtime_qubits"></a>2.4. Property `root > ibm-runtime > qubits`
 
 |              |                    |
 | ------------ | ------------------ |
 | **Type**     | `array of integer` |
 | **Required** | Yes                |
+
+**Description:** Indices of the qubits to use
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -161,6 +173,8 @@
 | **Type**     | `string` |
 | **Required** | No       |
 
+**Description:** The location of a file containing the API token to IBM's services
+
 ### <a name="ibm-runtime_custom-x"></a>2.6. Property `root > ibm-runtime > custom-x`
 
 |                           |                                                         |
@@ -170,11 +184,13 @@
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 | **Default**               | `null`                                                  |
 
-| Property                                | Pattern | Type    | Deprecated | Definition          | Title/Description |
-| --------------------------------------- | ------- | ------- | ---------- | ------------------- | ----------------- |
-| + [freq](#ibm-runtime_custom-x_freq )   | No      | object  | No         | In #/$defs/freqHunt | -                 |
-| + [amp](#ibm-runtime_custom-x_amp )     | No      | object  | No         | In #/$defs/ampHunt  | -                 |
-| - [shots](#ibm-runtime_custom-x_shots ) | No      | integer | No         | -                   | -                 |
+**Description:** Definition of a custom X gate
+
+| Property                                | Pattern | Type    | Deprecated | Definition          | Title/Description                         |
+| --------------------------------------- | ------- | ------- | ---------- | ------------------- | ----------------------------------------- |
+| + [freq](#ibm-runtime_custom-x_freq )   | No      | object  | No         | In #/$defs/freqHunt | The frequency range to calibrate the gate |
+| + [amp](#ibm-runtime_custom-x_amp )     | No      | object  | No         | In #/$defs/ampHunt  | The amplitude range to calibrate the gate |
+| - [shots](#ibm-runtime_custom-x_shots ) | No      | integer | No         | -                   | The number shots to calibrate with        |
 
 #### <a name="ibm-runtime_custom-x_freq"></a>2.6.1. Property `root > ibm-runtime > custom-x > freq`
 
@@ -185,12 +201,14 @@
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 | **Defined in**            | #/$defs/freqHunt                                        |
 
-| Property                                       | Pattern | Type             | Deprecated | Definition    | Title/Description |
-| ---------------------------------------------- | ------- | ---------------- | ---------- | ------------- | ----------------- |
-| - [start](#ibm-runtime_custom-x_freq_start )   | No      | number           | No         | -             | -                 |
-| - [stop](#ibm-runtime_custom-x_freq_stop )     | No      | number           | No         | -             | -                 |
-| - [units](#ibm-runtime_custom-x_freq_units )   | No      | enum (of string) | No         | In #/$defs/Hz | -                 |
-| - [number](#ibm-runtime_custom-x_freq_number ) | No      | integer          | No         | -             | -                 |
+**Description:** The frequency range to calibrate the gate
+
+| Property                                       | Pattern | Type             | Deprecated | Definition    | Title/Description           |
+| ---------------------------------------------- | ------- | ---------------- | ---------- | ------------- | --------------------------- |
+| - [start](#ibm-runtime_custom-x_freq_start )   | No      | number           | No         | -             | Initial frequency offset    |
+| - [stop](#ibm-runtime_custom-x_freq_stop )     | No      | number           | No         | -             | Final frequency offset      |
+| - [units](#ibm-runtime_custom-x_freq_units )   | No      | enum (of string) | No         | In #/$defs/Hz | Frequency unit              |
+| - [number](#ibm-runtime_custom-x_freq_number ) | No      | integer          | No         | -             | Number of frequency offsets |
 
 ##### <a name="ibm-runtime_custom-x_freq_start"></a>2.6.1.1. Property `root > ibm-runtime > custom-x > freq > start`
 
@@ -200,6 +218,8 @@
 | **Required** | No       |
 | **Default**  | `-30`    |
 
+**Description:** Initial frequency offset
+
 ##### <a name="ibm-runtime_custom-x_freq_stop"></a>2.6.1.2. Property `root > ibm-runtime > custom-x > freq > stop`
 
 |              |          |
@@ -207,6 +227,8 @@
 | **Type**     | `number` |
 | **Required** | No       |
 | **Default**  | `30`     |
+
+**Description:** Final frequency offset
 
 ##### <a name="ibm-runtime_custom-x_freq_units"></a>2.6.1.3. Property `root > ibm-runtime > custom-x > freq > units`
 
@@ -216,6 +238,8 @@
 | **Required**   | No                 |
 | **Default**    | `"MHz"`            |
 | **Defined in** | #/$defs/Hz         |
+
+**Description:** Frequency unit
 
 Must be one of:
 * "yHz"
@@ -244,6 +268,8 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `60`      |
 
+**Description:** Number of frequency offsets
+
 | Restrictions |        |
 | ------------ | ------ |
 | **Minimum**  | &gt; 0 |
@@ -257,11 +283,13 @@ Must be one of:
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 | **Defined in**            | #/$defs/ampHunt                                         |
 
-| Property                                      | Pattern | Type    | Deprecated | Definition | Title/Description |
-| --------------------------------------------- | ------- | ------- | ---------- | ---------- | ----------------- |
-| - [start](#ibm-runtime_custom-x_amp_start )   | No      | number  | No         | -          | -                 |
-| - [stop](#ibm-runtime_custom-x_amp_stop )     | No      | number  | No         | -          | -                 |
-| - [number](#ibm-runtime_custom-x_amp_number ) | No      | integer | No         | -          | -                 |
+**Description:** The amplitude range to calibrate the gate
+
+| Property                                      | Pattern | Type    | Deprecated | Definition | Title/Description    |
+| --------------------------------------------- | ------- | ------- | ---------- | ---------- | -------------------- |
+| - [start](#ibm-runtime_custom-x_amp_start )   | No      | number  | No         | -          | Starting amplitude   |
+| - [stop](#ibm-runtime_custom-x_amp_stop )     | No      | number  | No         | -          | Stopping amplitude   |
+| - [number](#ibm-runtime_custom-x_amp_number ) | No      | integer | No         | -          | Number of amplitudes |
 
 ##### <a name="ibm-runtime_custom-x_amp_start"></a>2.6.2.1. Property `root > ibm-runtime > custom-x > amp > start`
 
@@ -271,6 +299,8 @@ Must be one of:
 | **Required** | No       |
 | **Default**  | `0.01`   |
 
+**Description:** Starting amplitude
+
 ##### <a name="ibm-runtime_custom-x_amp_stop"></a>2.6.2.2. Property `root > ibm-runtime > custom-x > amp > stop`
 
 |              |          |
@@ -279,6 +309,8 @@ Must be one of:
 | **Required** | No       |
 | **Default**  | `1`      |
 
+**Description:** Stopping amplitude
+
 ##### <a name="ibm-runtime_custom-x_amp_number"></a>2.6.2.3. Property `root > ibm-runtime > custom-x > amp > number`
 
 |              |           |
@@ -286,6 +318,8 @@ Must be one of:
 | **Type**     | `integer` |
 | **Required** | No        |
 | **Default**  | `60`      |
+
+**Description:** Number of amplitudes
 
 | Restrictions |        |
 | ------------ | ------ |
@@ -299,6 +333,8 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `1024`    |
 
+**Description:** The number shots to calibrate with
+
 | Restrictions |        |
 | ------------ | ------ |
 | **Minimum**  | &gt; 0 |
@@ -311,20 +347,22 @@ Must be one of:
 | **Required**              | No                                                      |
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 
-| Property                                    | Pattern | Type                      | Deprecated | Definition                                  | Title/Description |
-| ------------------------------------------- | ------- | ------------------------- | ---------- | ------------------------------------------- | ----------------- |
-| - [run](#iq_run )                           | No      | boolean                   | No         | -                                           | -                 |
-| - [output-directory](#iq_output-directory ) | No      | string                    | No         | -                                           | -                 |
-| - [slice](#iq_slice )                       | No      | object                    | No         | -                                           | -                 |
-| - [measure-x](#iq_measure-x )               | No      | boolean                   | No         | -                                           | -                 |
-| - [01-freq-hunt](#iq_01-freq-hunt )         | No      | object                    | No         | Same as [freq](#ibm-runtime_custom-x_freq ) | -                 |
-| - [01-amp-hunt](#iq_01-amp-hunt )           | No      | object                    | No         | Same as [amp](#ibm-runtime_custom-x_amp )   | -                 |
-| - [12-freq-hunt](#iq_12-freq-hunt )         | No      | object                    | No         | Same as [freq](#ibm-runtime_custom-x_freq ) | -                 |
-| - [12-amp-hunt](#iq_12-amp-hunt )           | No      | object                    | No         | Same as [amp](#ibm-runtime_custom-x_amp )   | -                 |
-| - [shots](#iq_shots )                       | No      | integer                   | No         | -                                           | -                 |
-| - [movie-types](#iq_movie-types )           | No      | array of enum (of string) | No         | -                                           | -                 |
-| - [fig-shots](#iq_fig-shots )               | No      | integer                   | No         | -                                           | -                 |
-| - [base-factors](#iq_base-factors )         | No      | object                    | No         | -                                           | -                 |
+**Description:** IQ measurements specifications
+
+| Property                                    | Pattern | Type                      | Deprecated | Definition                                  | Title/Description                                                                    |
+| ------------------------------------------- | ------- | ------------------------- | ---------- | ------------------------------------------- | ------------------------------------------------------------------------------------ |
+| - [run](#iq_run )                           | No      | boolean                   | No         | -                                           | Should execute IQ measurements?                                                      |
+| - [output-directory](#iq_output-directory ) | No      | string                    | No         | -                                           | Output directory for the IQ results (deprecated)                                     |
+| - [slice](#iq_slice )                       | No      | object                    | No         | -                                           | The slice from the executed iterations to measure IQ for                             |
+| - [measure-x](#iq_measure-x )               | No      | boolean                   | No         | -                                           | Measure the IQ for the X observable (deprecated)                                     |
+| - [01-freq-hunt](#iq_01-freq-hunt )         | No      | object                    | No         | Same as [freq](#ibm-runtime_custom-x_freq ) | Frequency specification for the 0 -> 1 transition                                    |
+| - [01-amp-hunt](#iq_01-amp-hunt )           | No      | object                    | No         | Same as [amp](#ibm-runtime_custom-x_amp )   | Amplitude specification for the 0 -> 1 transition                                    |
+| - [12-freq-hunt](#iq_12-freq-hunt )         | No      | object                    | No         | Same as [freq](#ibm-runtime_custom-x_freq ) | Frequency specification for the 1 -> 2 transition                                    |
+| - [12-amp-hunt](#iq_12-amp-hunt )           | No      | object                    | No         | Same as [amp](#ibm-runtime_custom-x_amp )   | Amplitude specification for the 1 -> 2 transition                                    |
+| - [shots](#iq_shots )                       | No      | integer                   | No         | -                                           | Number of shots                                                                      |
+| - [movie-types](#iq_movie-types )           | No      | array of enum (of string) | No         | -                                           | Output movie types (experimental)                                                    |
+| - [fig-shots](#iq_fig-shots )               | No      | integer                   | No         | -                                           | Figure mesh size                                                                     |
+| - [base-factors](#iq_base-factors )         | No      | object                    | No         | -                                           | Control specific features of the pulse used to transition from i -> f (experimental) |
 
 ### <a name="iq_run"></a>3.1. Property `root > iq > run`
 
@@ -334,6 +372,8 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `false`   |
 
+**Description:** Should execute IQ measurements?
+
 ### <a name="iq_output-directory"></a>3.2. Property `root > iq > output-directory`
 
 |              |                  |
@@ -341,6 +381,8 @@ Must be one of:
 | **Type**     | `string`         |
 | **Required** | No               |
 | **Default**  | `"./leak-test/"` |
+
+**Description:** Output directory for the IQ results (deprecated)
 
 ### <a name="iq_slice"></a>3.3. Property `root > iq > slice`
 
@@ -350,11 +392,13 @@ Must be one of:
 | **Required**              | No                                                      |
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 
+**Description:** The slice from the executed iterations to measure IQ for
+
 | Property                    | Pattern | Type            | Deprecated | Definition | Title/Description |
 | --------------------------- | ------- | --------------- | ---------- | ---------- | ----------------- |
-| - [start](#iq_slice_start ) | No      | integer or null | No         | -          | -                 |
-| - [stop](#iq_slice_stop )   | No      | integer or null | No         | -          | -                 |
-| - [step](#iq_slice_step )   | No      | integer or null | No         | -          | -                 |
+| - [start](#iq_slice_start ) | No      | integer or null | No         | -          | Starting point    |
+| - [stop](#iq_slice_stop )   | No      | integer or null | No         | -          | Stopping point    |
+| - [step](#iq_slice_step )   | No      | integer or null | No         | -          | Step size         |
 
 #### <a name="iq_slice_start"></a>3.3.1. Property `root > iq > slice > start`
 
@@ -364,6 +408,8 @@ Must be one of:
 | **Required** | No                |
 | **Default**  | `-1`              |
 
+**Description:** Starting point
+
 #### <a name="iq_slice_stop"></a>3.3.2. Property `root > iq > slice > stop`
 
 |              |                   |
@@ -371,6 +417,8 @@ Must be one of:
 | **Type**     | `integer or null` |
 | **Required** | No                |
 | **Default**  | `-16`             |
+
+**Description:** Stopping point
 
 #### <a name="iq_slice_step"></a>3.3.3. Property `root > iq > slice > step`
 
@@ -380,6 +428,8 @@ Must be one of:
 | **Required** | No                |
 | **Default**  | `-1`              |
 
+**Description:** Step size
+
 ### <a name="iq_measure-x"></a>3.4. Property `root > iq > measure-x`
 
 |              |           |
@@ -387,6 +437,8 @@ Must be one of:
 | **Type**     | `boolean` |
 | **Required** | No        |
 | **Default**  | `true`    |
+
+**Description:** Measure the IQ for the X observable (deprecated)
 
 ### <a name="iq_01-freq-hunt"></a>3.5. Property `root > iq > 01-freq-hunt`
 
@@ -397,6 +449,8 @@ Must be one of:
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 | **Same definition as**    | [freq](#ibm-runtime_custom-x_freq)                      |
 
+**Description:** Frequency specification for the 0 -> 1 transition
+
 ### <a name="iq_01-amp-hunt"></a>3.6. Property `root > iq > 01-amp-hunt`
 
 |                           |                                                         |
@@ -405,6 +459,8 @@ Must be one of:
 | **Required**              | No                                                      |
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 | **Same definition as**    | [amp](#ibm-runtime_custom-x_amp)                        |
+
+**Description:** Amplitude specification for the 0 -> 1 transition
 
 ### <a name="iq_12-freq-hunt"></a>3.7. Property `root > iq > 12-freq-hunt`
 
@@ -415,6 +471,8 @@ Must be one of:
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 | **Same definition as**    | [freq](#ibm-runtime_custom-x_freq)                      |
 
+**Description:** Frequency specification for the 1 -> 2 transition
+
 ### <a name="iq_12-amp-hunt"></a>3.8. Property `root > iq > 12-amp-hunt`
 
 |                           |                                                         |
@@ -424,12 +482,16 @@ Must be one of:
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 | **Same definition as**    | [amp](#ibm-runtime_custom-x_amp)                        |
 
+**Description:** Amplitude specification for the 1 -> 2 transition
+
 ### <a name="iq_shots"></a>3.9. Property `root > iq > shots`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
+
+**Description:** Number of shots
 
 | Restrictions |        |
 | ------------ | ------ |
@@ -441,6 +503,8 @@ Must be one of:
 | ------------ | --------------------------- |
 | **Type**     | `array of enum (of string)` |
 | **Required** | No                          |
+
+**Description:** Output movie types (experimental)
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -473,6 +537,8 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `5000`    |
 
+**Description:** Figure mesh size
+
 | Restrictions |        |
 | ------------ | ------ |
 | **Minimum**  | &gt; 0 |
@@ -485,9 +551,11 @@ Must be one of:
 | **Required**              | No                                                                                                                        |
 | **Additional properties** | [[Should-conform]](#iq_base-factors_additionalProperties "Each additional property must conform to the following schema") |
 
-| Property                                     | Pattern | Type   | Deprecated | Definition             | Title/Description |
-| -------------------------------------------- | ------- | ------ | ---------- | ---------------------- | ----------------- |
-| - [](#iq_base-factors_additionalProperties ) | No      | object | No         | In #/$defs/baseFactors | -                 |
+**Description:** Control specific features of the pulse used to transition from i -> f (experimental)
+
+| Property                                     | Pattern | Type   | Deprecated | Definition             | Title/Description                            |
+| -------------------------------------------- | ------- | ------ | ---------- | ---------------------- | -------------------------------------------- |
+| - [](#iq_base-factors_additionalProperties ) | No      | object | No         | In #/$defs/baseFactors | Functions to apply on pulse shape parameters |
 
 #### <a name="iq_base-factors_additionalProperties"></a>3.12.1. Property `root > iq > base-factors > baseFactors`
 
@@ -498,10 +566,12 @@ Must be one of:
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 | **Defined in**            | #/$defs/baseFactors                                     |
 
-| Property                                                | Pattern | Type             | Deprecated | Definition | Title/Description |
-| ------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| - [func](#iq_base-factors_additionalProperties_func )   | No      | enum (of string) | No         | -          | -                 |
-| - [value](#iq_base-factors_additionalProperties_value ) | No      | number           | No         | -          | -                 |
+**Description:** Functions to apply on pulse shape parameters
+
+| Property                                                | Pattern | Type             | Deprecated | Definition | Title/Description                           |
+| ------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ------------------------------------------- |
+| - [func](#iq_base-factors_additionalProperties_func )   | No      | enum (of string) | No         | -          | Base two argument function to apply         |
+| - [value](#iq_base-factors_additionalProperties_value ) | No      | number           | No         | -          | The second argument to pass to the function |
 
 ##### <a name="iq_base-factors_additionalProperties_func"></a>3.12.1.1. Property `root > iq > base-factors > additionalProperties > func`
 
@@ -510,6 +580,8 @@ Must be one of:
 | **Type**     | `enum (of string)` |
 | **Required** | No                 |
 | **Default**  | `"+"`              |
+
+**Description:** Base two argument function to apply
 
 Must be one of:
 * "+"
@@ -526,6 +598,8 @@ Must be one of:
 | **Required** | No       |
 | **Default**  | `1.0`    |
 
+**Description:** The second argument to pass to the function
+
 ## <a name="ci-matrix"></a>4. Property `root > ci-matrix`
 
 |                           |                                                         |
@@ -534,10 +608,12 @@ Must be one of:
 | **Required**              | Yes                                                     |
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 
-| Property                             | Pattern | Type    | Deprecated | Definition | Title/Description |
-| ------------------------------------ | ------- | ------- | ---------- | ---------- | ----------------- |
-| + [directory](#ci-matrix_directory ) | No      | string  | No         | -          | -                 |
-| + [nq](#ci-matrix_nq )               | No      | integer | No         | -          | -                 |
+**Description:** Specification of the location of the CI matrices location
+
+| Property                             | Pattern | Type    | Deprecated | Definition | Title/Description                             |
+| ------------------------------------ | ------- | ------- | ---------- | ---------- | --------------------------------------------- |
+| + [directory](#ci-matrix_directory ) | No      | string  | No         | -          | Base directory of CI matrices                 |
+| + [nq](#ci-matrix_nq )               | No      | integer | No         | -          | Space size, should be equal to \`2^n_qubits\` |
 
 ### <a name="ci-matrix_directory"></a>4.1. Property `root > ci-matrix > directory`
 
@@ -546,12 +622,16 @@ Must be one of:
 | **Type**     | `string` |
 | **Required** | Yes      |
 
+**Description:** Base directory of CI matrices
+
 ### <a name="ci-matrix_nq"></a>4.2. Property `root > ci-matrix > nq`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | Yes       |
+
+**Description:** Space size, should be equal to `2^n_qubits`
 
 | Restrictions |        |
 | ------------ | ------ |
@@ -565,12 +645,16 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `false`   |
 
+**Description:** Should the output be verbose?
+
 ## <a name="output-directory"></a>6. Property `root > output-directory`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | Yes      |
+
+**Description:** Base output directory
 
 ## <a name="live-feed-file"></a>7. Property `root > live-feed-file`
 
@@ -579,6 +663,8 @@ Must be one of:
 | **Type**     | `string` |
 | **Required** | No       |
 
+**Description:** Location of live feed file (CSV file with raw data)
+
 ## <a name="stop-file"></a>8. Property `root > stop-file`
 
 |              |          |
@@ -586,12 +672,16 @@ Must be one of:
 | **Type**     | `string` |
 | **Required** | No       |
 
+**Description:** Location of emergency stop file (if file exists, stop running)
+
 ## <a name="parameters"></a>9. Property `root > parameters`
 
 |              |         |
 | ------------ | ------- |
 | **Type**     | `array` |
 | **Required** | Yes     |
+
+**Description:** Parameter specification array
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -601,9 +691,9 @@ Must be one of:
 | **Additional items** | False              |
 | **Tuple validation** | See below          |
 
-| Each item of this array must be    | Description |
-| ---------------------------------- | ----------- |
-| [parameter-set](#parameters_items) | -           |
+| Each item of this array must be    | Description             |
+| ---------------------------------- | ----------------------- |
+| [parameter-set](#parameters_items) | Parameter specification |
 
 ### <a name="autogenerated_heading_4"></a>9.1. root > parameters > parameter-set
 
@@ -614,14 +704,16 @@ Must be one of:
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 | **Defined in**            | #/$defs/parameter-set                                   |
 
-| Property                                                | Pattern | Type              | Deprecated | Definition | Title/Description |
-| ------------------------------------------------------- | ------- | ----------------- | ---------- | ---------- | ----------------- |
-| + [Nt](#parameters_items_Nt )                           | No      | integer           | No         | -          | -                 |
-| + [padding](#parameters_items_padding )                 | No      | enum (of integer) | No         | -          | -                 |
-| + [total-shots](#parameters_items_total-shots )         | No      | integer           | No         | -          | -                 |
-| + [distance](#parameters_items_distance )               | No      | number            | No         | -          | -                 |
-| - [phys-to-logical](#parameters_items_phys-to-logical ) | No      | integer           | No         | -          | -                 |
-| - [additional-data](#parameters_items_additional-data ) | No      | object            | No         | -          | -                 |
+**Description:** Parameter specification
+
+| Property                                                | Pattern | Type              | Deprecated | Definition | Title/Description                                         |
+| ------------------------------------------------------- | ------- | ----------------- | ---------- | ---------- | --------------------------------------------------------- |
+| + [Nt](#parameters_items_Nt )                           | No      | integer           | No         | -          | Number of parameters to use                               |
+| + [padding](#parameters_items_padding )                 | No      | enum (of integer) | No         | -          | Padding type, 1 -> No, 2 -> LEFT, 3 -> RIGHT, 4 -> MIDDLE |
+| + [total-shots](#parameters_items_total-shots )         | No      | integer           | No         | -          | Number of shots                                           |
+| + [distance](#parameters_items_distance )               | No      | number            | No         | -          | Inter-atomic distance                                     |
+| - [phys-to-logical](#parameters_items_phys-to-logical ) | No      | integer           | No         | -          | Multiplier of each time-slot                              |
+| - [additional-data](#parameters_items_additional-data ) | No      | object            | No         | -          | Experimental options                                      |
 
 #### <a name="parameters_items_Nt"></a>9.1.1. Property `root > parameters > parameters items > Nt`
 
@@ -629,6 +721,8 @@ Must be one of:
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | Yes       |
+
+**Description:** Number of parameters to use
 
 | Restrictions |        |
 | ------------ | ------ |
@@ -640,6 +734,8 @@ Must be one of:
 | ------------ | ------------------- |
 | **Type**     | `enum (of integer)` |
 | **Required** | Yes                 |
+
+**Description:** Padding type, 1 -> No, 2 -> LEFT, 3 -> RIGHT, 4 -> MIDDLE
 
 Must be one of:
 * 1
@@ -654,6 +750,8 @@ Must be one of:
 | **Type**     | `integer` |
 | **Required** | Yes       |
 
+**Description:** Number of shots
+
 | Restrictions |        |
 | ------------ | ------ |
 | **Minimum**  | &gt; 0 |
@@ -664,6 +762,8 @@ Must be one of:
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | Yes      |
+
+**Description:** Inter-atomic distance
 
 | Restrictions |        |
 | ------------ | ------ |
@@ -677,6 +777,8 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `1`       |
 
+**Description:** Multiplier of each time-slot
+
 | Restrictions |        |
 | ------------ | ------ |
 | **Minimum**  | &gt; 0 |
@@ -689,9 +791,11 @@ Must be one of:
 | **Required**              | No                                                                        |
 | **Additional properties** | [[Any type: allowed]](# "Additional Properties of any type are allowed.") |
 
-| Property                                            | Pattern | Type   | Deprecated | Definition | Title/Description |
-| --------------------------------------------------- | ------- | ------ | ---------- | ---------- | ----------------- |
-| + [order](#parameters_items_additional-data_order ) | No      | string | No         | -          | -                 |
+**Description:** Experimental options
+
+| Property                                            | Pattern | Type   | Deprecated | Definition | Title/Description                                                                                                                                                                                          |
+| --------------------------------------------------- | ------- | ------ | ---------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| + [order](#parameters_items_additional-data_order ) | No      | string | No         | -          | Specific channel order. Each slot is separated by a '_'. Channel type is (1) 'a' - all, (2) 'd' - drive, and (3) 'u' - control. The channel type is followed by a number, the number of time-slots to use. |
 
 ##### <a name="parameters_items_additional-data_order"></a>9.1.6.1. Property `root > parameters > parameters items > additional-data > order`
 
@@ -699,6 +803,8 @@ Must be one of:
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | Yes      |
+
+**Description:** Specific channel order. Each slot is separated by a '_'. Channel type is (1) 'a' - all, (2) 'd' - drive, and (3) 'u' - control. The channel type is followed by a number, the number of time-slots to use.
 
 ## <a name="reservation"></a>10. Property `root > reservation`
 
@@ -709,13 +815,15 @@ Must be one of:
 | **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
 | **Defined in**            | #/$defs/datetime                                        |
 
+**Description:** If a reservation exists, specify the date and time
+
 | Property                         | Pattern | Type    | Deprecated | Definition | Title/Description |
 | -------------------------------- | ------- | ------- | ---------- | ---------- | ----------------- |
-| - [year](#reservation_year )     | No      | integer | No         | -          | -                 |
-| - [month](#reservation_month )   | No      | integer | No         | -          | -                 |
-| - [day](#reservation_day )       | No      | integer | No         | -          | -                 |
-| - [hour](#reservation_hour )     | No      | integer | No         | -          | -                 |
-| - [minute](#reservation_minute ) | No      | integer | No         | -          | -                 |
+| - [year](#reservation_year )     | No      | integer | No         | -          | Year              |
+| - [month](#reservation_month )   | No      | integer | No         | -          | Month             |
+| - [day](#reservation_day )       | No      | integer | No         | -          | Day               |
+| - [hour](#reservation_hour )     | No      | integer | No         | -          | Hour              |
+| - [minute](#reservation_minute ) | No      | integer | No         | -          | Minute            |
 
 ### <a name="reservation_year"></a>10.1. Property `root > reservation > year`
 
@@ -724,12 +832,16 @@ Must be one of:
 | **Type**     | `integer` |
 | **Required** | No        |
 
+**Description:** Year
+
 ### <a name="reservation_month"></a>10.2. Property `root > reservation > month`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
+
+**Description:** Month
 
 ### <a name="reservation_day"></a>10.3. Property `root > reservation > day`
 
@@ -738,6 +850,8 @@ Must be one of:
 | **Type**     | `integer` |
 | **Required** | No        |
 
+**Description:** Day
+
 ### <a name="reservation_hour"></a>10.4. Property `root > reservation > hour`
 
 |              |           |
@@ -745,12 +859,16 @@ Must be one of:
 | **Type**     | `integer` |
 | **Required** | No        |
 
+**Description:** Hour
+
 ### <a name="reservation_minute"></a>10.5. Property `root > reservation > minute`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
+
+**Description:** Minute
 
 ## <a name="optimizer"></a>11. Property `root > optimizer`
 
@@ -760,9 +878,11 @@ Must be one of:
 | **Required**              | No                                                                        |
 | **Additional properties** | [[Any type: allowed]](# "Additional Properties of any type are allowed.") |
 
+**Description:** Arguments to pass to the optimizer (currently COBYLA)
+
 | Property                               | Pattern | Type   | Deprecated | Definition | Title/Description |
 | -------------------------------------- | ------- | ------ | ---------- | ---------- | ----------------- |
 | - [](#optimizer_additionalProperties ) | No      | object | No         | -          | -                 |
 
 ----------------------------------------------------------------------------------------------------------------------------
-Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2024-02-12 at 16:48:17 +0200
+Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2024-02-13 at 17:46:43 +0200
