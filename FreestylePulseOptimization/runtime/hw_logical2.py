@@ -7,7 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 from collections.abc import Sequence, Mapping
-from typing import Callable, Any, Optional
+from typing import Callable, Any, Optional, ContextManager
 from dataclasses import dataclass, field
 
 from collections import defaultdict
@@ -1439,7 +1439,8 @@ def simulate_transmon(
 def optimize_optimized_custom_order(
     qubit_specification: Sequence[QubitSpecification],
     channel_order_str: str,
-    phys_to_logical: int,
+    channel_alignment_str: str,
+    phys_to_logical: int|Sequence[int],
     runner: RunOnBackend,
     padding_type: PaddingType,
     timing_const: TimingConstraints,
@@ -1462,6 +1463,8 @@ def optimize_optimized_custom_order(
 
     backend: BACKEND_TYPE = runner.backend
 
+
+
     if live_file_feed is not None:
         live_file_feed.parent.mkdir(parents=True, exist_ok=True)
         if not live_file_feed.exists():
@@ -1475,6 +1478,13 @@ def optimize_optimized_custom_order(
     channel_order = [
         (spec[0].lower(), int(spec[1:])) for spec in channel_order_str.split("_")
     ]
+
+    channel_alignment = channel_alignment_str.split('_')
+
+    if not isinstance(phys_to_logical, Sequence):
+        phys_to_logical = [phys_to_logical,] * len(channel_order)
+    assert len(phys_to_logical) == len(channel_order), "What did you do?"
+
     new_names = []
     cur = 0
     for channel_type, length in channel_order:
@@ -1550,6 +1560,7 @@ def optimize_optimized_custom_order(
         convert_parameters_to_channels_ordered(
             qubit_specification,
             channel_order,
+            channel_alignment,
             phys_to_logical,
             new_names,
             padding_type,
@@ -1823,11 +1834,12 @@ def optimize_optimized_custom_order(
 def convert_parameters_to_channels_ordered(
     qubits: Sequence[QubitSpecification],
     channel_order: Sequence[tuple[str, int]],
-    phys_to_logical: int,
+    channel_alignment: Sequence[str],
+    phys_to_logical: Sequence[int],
     parameter_names: Sequence[str],
     padding_type: PaddingType,
     timing_const: TimingConstraints,
-) -> Callable[[Sequence[complex]], Sequence[Mapping[str, Sequence[complex]]]]:
+) -> Callable[[Sequence[complex]], Sequence[tuple[str, Mapping[str, Sequence[complex]]]]]:
     # TODO Add testing for padding and timing_const
 
     channels = [
@@ -1837,13 +1849,13 @@ def convert_parameters_to_channels_ordered(
 
     def _internal(
         values: Sequence[complex],
-    ) -> Sequence[Mapping[str, Sequence[complex]]]:
-        ret: list[dict[str, list[complex]]] = []
+    ) -> Sequence[tuple[str, Mapping[str, Sequence[complex]]]]:
+        ret: list[tuple[str, dict[str, list[complex]]]] = []
 
         prev = 0
 
         # import pdb; pdb.set_trace()
-        for i, (_, length) in enumerate(channel_order):
+        for i, ((_, length), alignment, phy_to_log) in enumerate(zip(channel_order, channel_alignment, phys_to_logical)):
             N_channel = len(channels[i])
             cur = length * N_channel
             cur_names = parameter_names[prev : prev + cur]
@@ -1856,30 +1868,39 @@ def convert_parameters_to_channels_ordered(
                     [
                         value,
                     ]
-                    * phys_to_logical
+                    * phy_to_log
                 )
 
             prev += cur
 
             ret.append(
-                {
+                (alignment, {
                     k: padding_type.pad(v, timing_const).tolist()
                     for k, v in cur_ret.items()
-                }
+                })
             )
 
         return ret
 
     return _internal
 
+def get_alignment_context(alignment: str) -> Callable[[], ContextManager[None]]:
+    match alignment.lower():
+        case 's':
+            return align_sequential
+        case 'c':
+            return align_left
+        case _:
+            raise ValueError(f"What is this? {alignment=}")
 
 def convert_ordered_channels_to_schedule(
-    ordered_channels: Sequence[Mapping[str, Sequence[complex]]]
+    ordered_channels: Sequence[tuple[str, Mapping[str, Sequence[complex]]]]
 ) -> ScheduleBlock:
     with build(name="VQE") as schd:
         with align_sequential():
-            for section in ordered_channels:
-                with align_left():
+            for alignment, section in ordered_channels:
+                align_func = get_alignment_context(alignment)
+                with align_func():
                     for key, values in section.items():
                         channel = get_channel(key)
                         waveform = Waveform(

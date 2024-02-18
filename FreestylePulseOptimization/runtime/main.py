@@ -252,7 +252,8 @@ def main():
                 except Exception as e:
                     print(f"Failed to do pre - IQ measurements for {parameter}.\n{e=}.")
                     pre_IQ = None
-            if custom_x is None and not parameter.additional_data.get("order", False):
+            order: Optional[str] = parameter.additional_data.get('order', None)
+            if custom_x is None and not order:
                 (
                     hw_sol,
                     hw_sol_times,
@@ -272,10 +273,11 @@ def main():
                     failsafe=True,
                     **hw_options,
                 )
-            elif custom_x is None and parameter.additional_data.get("order", False):
+            elif custom_x is None and order:
                 (hw_sol, hw_sol_times, _) = optimize_optimized_custom_order(
                     qubit_specification=qubit_spec,
-                    channel_order_str=parameter.additional_data.get("order"),
+                    channel_order_str=order,
+                    channel_alignment_str=parameter.additional_data.get('alignment', '_'.join(['c'] * order.count('_'))),
                     phys_to_logical=phys_to_logical,
                     runner=runner,
                     padding_type=padding,

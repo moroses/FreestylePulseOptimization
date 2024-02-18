@@ -338,10 +338,23 @@
           "exclusiveMinimum": 0
         },
         "phys-to-logical": {
+                "oneOf": [
+                        {
           "type": "integer",
-          "description": "Multiplier of each time-slot",
+          "description": "Multiplier of each time-slot (all slots will have the same multiplier)",
           "exclusiveMinimum": 0,
           "default": 1
+                        },
+                        {
+                                "type": "array",
+                                "description": "Multiplier of each time-slot for the different channel specifications (experimental)",
+                                "items": {
+                                        "type": "integer",
+                                        "exclusiveMinimum": 0
+                                },
+                                "minItems": 1
+                        }
+                ]
         },
         "additional-data": {
                 "type": "object",
@@ -350,6 +363,11 @@
                         "order": {
                                 "type": "string",
                                 "description": "Specific channel order. Each slot is separated by a '_'. Channel type is (1) 'a' - all, (2) 'd' - drive, and (3) 'u' - control. The channel type is followed by a number, the number of time-slots to use."
+                        },
+                        "alignment": {
+                                "type": "string",
+                                "description": "Specific intra-segment alignment. Options are separated by '_' and can be: (1) 's' sequential, and (2) 'c' concurrent.",
+                                "default": "Concurrent for all segments."
                         }
                 },
                 "required": ["order"]

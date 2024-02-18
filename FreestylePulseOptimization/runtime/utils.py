@@ -24,6 +24,8 @@ from functools import partial, reduce
 from dataclasses import dataclass, field
 from ..utils import PaddingType, TimingConstraints
 
+from qiskit import qpy
+
 
 # TODO Clean this bit ->
 from ..utils import CI_MatrixSolution
@@ -58,7 +60,7 @@ class Parameter:
     padding: PaddingType
     total_shots: int
     distance: float
-    phys_to_logical: int = 1
+    phys_to_logical: int|Sequence[int] = 1
     additional_data: Mapping[str, Any] = field(default_factory=dict)
 
     def __str__(self: "Parameter") -> str:
@@ -80,7 +82,14 @@ class Parameter:
         padding = PaddingType(int(d["padding"]))
         total_shots = int(d["total-shots"])
         distance = float(d["distance"])
-        phys_to_logical = int(d.get("phys-to-logical", 1))
+        phys_to_logical = d.get("phys-to-logical", 1)
+        sphys_to_logical = str(phys_to_logical)
+        if isinstance(phys_to_logical, Iterable):
+            phys_to_logical = list(map(int, phys_to_logical))
+        elif '[' in sphys_to_logical or ']' in sphys_to_logical or ',' in sphys_to_logical:
+            phys_to_logical = [int(p.strip()) for p in sphys_to_logical.replace('[', '').replace(']', '').split(',')]
+        else:
+            phys_to_logical = int(phys_to_logical)
         additional_data = d.get("additional-data", {})
         return Parameter(
             Nt=Nt,
@@ -429,3 +438,7 @@ def convert_channels_to_scheduleblock(
             )
             play(waveform, channel)
     return schd
+
+def save_circuits(file_name: str, circuits: list[QuantumCircuit|ScheduleBlock]|QuantumCircuit|ScheduleBlock) -> None:
+    with open(file_name, 'wb') as io:
+        qpy.dump(circuits, io)
