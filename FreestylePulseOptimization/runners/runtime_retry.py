@@ -48,6 +48,10 @@ def recover_from_session(
             print(f"Unknown error for {job.job_id()}!")
 
 
+def try_new_session(runner: "RetryRuntimeRunner", job: Optional[RuntimeJob]) -> None:
+    runner.close_session()
+    runner.open_session()
+
 class RetryRuntimeRunner(RuntimeRunner):
     __N: int
     __session_kwargs: Mapping[str, Any]
@@ -75,6 +79,14 @@ class RetryRuntimeRunner(RuntimeRunner):
     def session_kwargs(self: Self) -> Mapping[str, Any]:
         return self.__session_kwargs
 
+    @property
+    def reaction(self: Self) -> REACTION_FUNCTION:
+        return self.__reaction_function
+
+    @reaction.setter
+    def reaction(self: Self, reaction: REACTION_FUNCTION) -> None:
+        self.__reaction_function = reaction
+
     @session_kwargs.setter
     def session_kwargs(self: Self, values: Mapping[str, Any]) -> None:
         self.__session_kwargs = {k: v for k, v in values.items()}
@@ -90,14 +102,19 @@ class RetryRuntimeRunner(RuntimeRunner):
         errors: list[str] = []
         while i < self.__N:
             print(f"Running {i}...")
-            job = super().run(circuits, **options)
-            job.wait_for_final_state()
+            job = None
+            try:
+                job = super().run(circuits, **options)
+                job.wait_for_final_state()
 
-            if self.__test_function(job):
-                return job
-            errors.append(f"{job.session_id} - {job.job_id()}: {job.error_message()}")
-
-            self.__reaction_function(self, job)
+                if self.__test_function(job):
+                    return job
+                errors.append(f"{job.session_id} - {job.job_id()}: {job.error_message()}")
+            except Exception as e:
+                pre_text = f'{job.session_id} - {job.job_id}:' if job is not None else 'No job:'
+                errors.append(f"{pre_text}: Exception - {e}")
+            finally:
+                self.__reaction_function(self, job)
 
             i += 1
         err_str = "\n".join(errors)

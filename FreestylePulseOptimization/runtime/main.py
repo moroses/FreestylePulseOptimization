@@ -20,6 +20,7 @@ from ..iq.utils import IQOptions
 from ..iq.main import find_the_leak_advanced
 from ..runners.runtime import RuntimeRunner
 from ..runners import RetryRuntimeRunner
+from ..runners.runtime_retry import try_new_session
 
 from ..utils import OptimizationTime, set_minimal_execution_time
 from ..hw import HWCI_MatrixSolution
@@ -121,6 +122,7 @@ def main():
             service,
             device_name,
         )
+        runner.reaction = try_new_session
         # runner.session_kwargs = {
         #         'max_time': '2h',
         #         }
