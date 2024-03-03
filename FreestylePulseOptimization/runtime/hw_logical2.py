@@ -1440,7 +1440,7 @@ def optimize_optimized_custom_order(
     qubit_specification: Sequence[QubitSpecification],
     channel_order_str: str,
     channel_alignment_str: str,
-    phys_to_logical: int|Sequence[int],
+    phys_to_logical: int | Sequence[int],
     runner: RunOnBackend,
     padding_type: PaddingType,
     timing_const: TimingConstraints,
@@ -1463,8 +1463,6 @@ def optimize_optimized_custom_order(
 
     backend: BACKEND_TYPE = runner.backend
 
-
-
     if live_file_feed is not None:
         live_file_feed.parent.mkdir(parents=True, exist_ok=True)
         if not live_file_feed.exists():
@@ -1479,10 +1477,12 @@ def optimize_optimized_custom_order(
         (spec[0].lower(), int(spec[1:])) for spec in channel_order_str.split("_")
     ]
 
-    channel_alignment = channel_alignment_str.split('_')
+    channel_alignment = channel_alignment_str.split("_")
 
     if not isinstance(phys_to_logical, Sequence):
-        phys_to_logical = [phys_to_logical,] * len(channel_order)
+        phys_to_logical = [
+            phys_to_logical,
+        ] * len(channel_order)
     assert len(phys_to_logical) == len(channel_order), "What did you do?"
 
     new_names = []
@@ -1839,7 +1839,9 @@ def convert_parameters_to_channels_ordered(
     parameter_names: Sequence[str],
     padding_type: PaddingType,
     timing_const: TimingConstraints,
-) -> Callable[[Sequence[complex]], Sequence[tuple[str, Mapping[str, Sequence[complex]]]]]:
+) -> Callable[
+    [Sequence[complex]], Sequence[tuple[str, Mapping[str, Sequence[complex]]]]
+]:
     # TODO Add testing for padding and timing_const
 
     channels = [
@@ -1855,7 +1857,9 @@ def convert_parameters_to_channels_ordered(
         prev = 0
 
         # import pdb; pdb.set_trace()
-        for i, ((_, length), alignment, phy_to_log) in enumerate(zip(channel_order, channel_alignment, phys_to_logical)):
+        for i, ((_, length), alignment, phy_to_log) in enumerate(
+            zip(channel_order, channel_alignment, phys_to_logical)
+        ):
             N_channel = len(channels[i])
             cur = length * N_channel
             cur_names = parameter_names[prev : prev + cur]
@@ -1874,24 +1878,29 @@ def convert_parameters_to_channels_ordered(
             prev += cur
 
             ret.append(
-                (alignment, {
-                    k: padding_type.pad(v, timing_const).tolist()
-                    for k, v in cur_ret.items()
-                })
+                (
+                    alignment,
+                    {
+                        k: padding_type.pad(v, timing_const).tolist()
+                        for k, v in cur_ret.items()
+                    },
+                )
             )
 
         return ret
 
     return _internal
 
+
 def get_alignment_context(alignment: str) -> Callable[[], ContextManager[None]]:
     match alignment.lower():
-        case 's':
+        case "s":
             return align_sequential
-        case 'c':
+        case "c":
             return align_left
         case _:
             raise ValueError(f"What is this? {alignment=}")
+
 
 def convert_ordered_channels_to_schedule(
     ordered_channels: Sequence[tuple[str, Mapping[str, Sequence[complex]]]]

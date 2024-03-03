@@ -52,6 +52,7 @@ def try_new_session(runner: "RetryRuntimeRunner", job: Optional[RuntimeJob]) -> 
     runner.close_session()
     runner.open_session()
 
+
 class RetryRuntimeRunner(RuntimeRunner):
     __N: int
     __session_kwargs: Mapping[str, Any]
@@ -109,9 +110,15 @@ class RetryRuntimeRunner(RuntimeRunner):
 
                 if self.__test_function(job):
                     return job
-                errors.append(f"{job.session_id} - {job.job_id()}: {job.error_message()}")
+                errors.append(
+                    f"{job.session_id} - {job.job_id()}: {job.error_message()}"
+                )
             except Exception as e:
-                pre_text = f'{job.session_id} - {job.job_id}:' if job is not None else 'No job:'
+                pre_text = (
+                    f"{job.session_id} - {job.job_id}:"
+                    if job is not None
+                    else "No job:"
+                )
                 errors.append(f"{pre_text}: Exception - {e}")
             finally:
                 self.__reaction_function(self, job)
