@@ -1,8 +1,6 @@
-#!/bin/env python3
-# Author: Mor M. Roses
-
+"""Base utilities for the base module."""
 from __future__ import annotations
-from collections.abc import Sequence, Iterable, Iterator, Mapping
+from collections.abc import Sequence, Mapping
 import enum
 from functools import reduce
 from itertools import product
@@ -20,7 +18,6 @@ import qiskit.pulse.library
 import qiskit.quantum_info
 from qiskit.quantum_info.states.densitymatrix import DensityMatrix
 from qiskit.quantum_info.states.statevector import Statevector
-import qiskit_dynamics as qd
 import datetime
 import time
 import numpy as np
@@ -31,6 +28,8 @@ import re
 import enum
 from . import pulses
 
+from warnings import deprecated
+
 # TODO this needs to move to another file
 # something like CI solver
 
@@ -38,6 +37,24 @@ from . import pulses
 def pauli_composer(
     N_qubits: int, *, factor: float = 1
 ) -> Callable[[Mapping[str, float | complex]], npt.NDArray[np.complex_ | np.float_]]:
+    """
+    Return a function converting a mapping of Pauli string to a matrix of dimensionality of `N_qubits`.
+
+    Generate a function converting a mapping of Pauli string to a matrix of dimensionality of `N_qubits`.
+    Also, multiplies each string by `factor`.
+
+    Parameters
+    ----------
+    N_qubits: int
+        The target dimensionality
+    factor: float
+        The factor of each Pauli string. Defaults to 1
+
+    Returns
+    -------
+    Callable[[Mapping[str, float | complex]], npt.NDArray[np.complex_ | np.float_]]
+        A function converting a mapping of Pauli strings to a matrix
+    """
     pauli_map = {
         "I": np.eye(2, dtype=complex) * factor,
         "X": np.array([[0, 1], [1, 0]], dtype=complex) * factor,
@@ -63,6 +80,24 @@ def pauli_composer(
 def pauli_decomposer(
     N_qubits: int, *, factor: float = 1
 ) -> Callable[[npt.NDArray[np.complex_ | np.float_]], Mapping[str, float | complex]]:
+    """
+    Return a function converting a matrix (dimensionality of `N_qubits`) to a mapping of Pauli string.
+
+    Generate a function converting a matrix (dimensionality of `N_qubits`) to a mapping of Pauli strings.
+    Also, multiplies each string by `factor`.
+
+    Parameters
+    ----------
+    N_qubits: int
+        The original dimensionality
+    factor: float
+        The factor of each Pauli string. Defaults to 1
+
+    Returns
+    -------
+    Callable[[npt.NDArray[np.complex_ | np.float_]], Mapping[str, float | complex]]
+        A function converting a matrix to a mapping of Pauli strings
+    """
     pauli_labels = [
         "I",
         "X",
@@ -97,17 +132,50 @@ def pauli_decomposer(
 
 @dataclasses.dataclass(frozen=True, order=True)
 class CI_Matrix:
+    """Base class for Configuration Interaction (CI) matrix"""
     mol_name: str
+    """The molecule name"""
     distance: float
+    """The inter-atomic distance (in Angstrom)"""
     n_dim: int
+    """The dimensionality of the matrix. $n_{qubits} = log_2(n_dim)$"""
     nuclear_repulsion_energy: float
+    """The nuclear repulsion energy"""
     ci_ground_state_energy: float
+    """The ground state energy"""
     matrix: np.ndarray
+    """The CI matrix"""
 
 
 def load_ci_matrix_from_folder(
     base_folder: Path | str, mol_dist: str, n_dim: int
 ) -> CI_Matrix:
+    """
+    Loads a CI matrix object from a directory.
+
+    Loads a CI matrix from a directory according to the following specification:
+        - `mol_dist` - Is in the following format [MOLECULE-NAME]_[INTER-ATOMIC-DISTANCE]
+        - There needs to be a directory called `mol_dist` under `base_folder`
+        - In this folder the following files are needed:
+            1. "CI_result.json" - A JSON file hosting an object with the following properties:
+                1. nuclear_repulsion_energy - float
+                2. ci_ground_state_energy - float
+            2. "CI_matrices/`mol_dist`_cimat__`n_dim`.out" - A text file with the matrix entries. The rows are separated by line breaks and the columns are separated by a single space.
+
+    Parameters
+    ----------
+    base_folder: Path | str
+        The base folder to load from
+    mol_dist: str
+        The molecule name and distance identifier
+    n_dim: int
+        The dimensionality of the loading matrix
+
+    Returns
+    -------
+    CI_Matrix
+        The CI matrix object
+    """
     base_folder = Path(base_folder)
     bdir = base_folder / f"{mol_dist}"
     json_file = bdir / "CI_result.json"
@@ -142,6 +210,23 @@ def load_ci_matrix_from_folder(
 def load_all_ci_matrices_from_folder(
     base_dir: str | Path, n_dim: int
 ) -> Sequence[CI_Matrix]:
+    """
+    Loads all CI matrices from `base_dir` with dimensionality of `n_dim`
+
+    Loads all CI matrices from `base_dir` with dimensionality of `n_dim` using `load_ci_matrix_from_folder`.
+
+    Parameters
+    ----------
+    base_dir: Path | str
+        The base directory to load from
+    n_dim: int
+        The dimensionality to load
+
+    Returns
+    -------
+    Sequence[CI_Matrix]
+        All the loaded CI matrices found
+    """
     ret: list[CI_Matrix] = []
     pbase_dir = Path(base_dir)
     pattern = re.compile(r"\w+_[\d.]+")
@@ -159,19 +244,43 @@ def load_all_ci_matrices_from_folder(
 
 @dataclasses.dataclass(kw_only=True)
 class CI_MatrixSolution:
+    """Base class for a solution for the ground state of a CI matrix"""
     ci_matrix: CI_Matrix
+    """The CI matrix solved"""
     dt: float
+    """The base sampling rate"""
     success: bool
+    """Did the optimizer succeeded?"""
     Nt: int
+    """Number of parameters"""
     parameters_trajectory: Sequence[Sequence[complex]]
+    """The trajectory of the parameters"""
     parameter_names: Sequence[str]
+    """The names of each parameter"""
     energy_trajectory: Sequence[float]
+    """The energy trajectory"""
     qubit_spec: Sequence[pulses.QubitSpecification]
+    """The qubit specifications used"""
     qubit_noise: Optional[Sequence[pulses.QubitNoiseParameters]] = None
+    """The qubit noise parameters"""
     additional_data: Optional[Mapping[str, Any]] = None
+    """A dictionary with relevant additional data"""
 
 
 def random_complex(*shape: int) -> np.ndarray:
+    """
+    Return a random complex matrix where each absolute value of each element is between 0 and 1
+
+    Parameters
+    ----------
+    shape: tuple[int,...
+        The shape of the matrix
+
+    Returns
+    -------
+    np.ndarray
+        A random complex matrix
+    """
     r = np.random.random(*shape)
     theta = np.random.random(*shape) * 2 * np.pi
     rr = np.sqrt(r)
@@ -179,6 +288,30 @@ def random_complex(*shape: int) -> np.ndarray:
 
 
 def _get_channel_by_name(channel_name: str) -> qiskit.pulse.channels.PulseChannel:
+    """
+    Convert a string identifier of a channel to a `PulseChannel` object
+
+    The supported channels are:
+        - "d" - For drive channels;
+        - "u" - For control channels.
+    The channel name needs to be "[CHANNEL-TYPE][CHANNEL-INDEX]".
+    Anything will raise an AttributeError
+
+    Parameters
+    ----------
+    channel_name: str
+        The channel string identifier
+
+    Returns
+    -------
+    qiskit.pulse.channels.PulseChannel
+        The requested channel
+
+    Raises
+    ------
+    AttributeError:
+        If the channel type is unknown
+    """
     c_type = channel_name[:1]
     c_index = int(channel_name[1:])
     match c_type:
@@ -190,6 +323,7 @@ def _get_channel_by_name(channel_name: str) -> qiskit.pulse.channels.PulseChanne
             raise AttributeError(f"Got a bad channel! {channel_name=}")
 
 
+@deprecated('Use new protocols in the appropriate module')
 def build_schedule(
     parameter_names: Sequence[str],
     parameters: Sequence[complex],
@@ -233,16 +367,44 @@ def build_schedule(
 
 
 QISKIT_STATE = Statevector | DensityMatrix
+"""Qiskit's representation of a quantum state"""
 
 
 def _real_to_complex(z: npt.NDArray[float]) -> npt.NDArray[complex]:
+    """
+    Internal method to convert a 2N vector of float to a N vector of complex
+
+    Parameters
+    ----------
+    z: npt.NDArray[float]
+        A 2N vector of float
+
+    Returns
+    -------
+    npt.NDArray[complex]
+        A N vector of complex
+    """
     return z[: len(z) // 2] + z[len(z) // 2 :] * 1j
 
 
 def _complex_to_real(z: npt.NDArray[complex]) -> npt.NDArray[float]:
+    """
+    Internal method to convert a N vector of complex to a 2N vector of float
+
+    Parameters
+    ----------
+    z: npt.NDArray[complex]
+        A N vector of complex
+
+    Returns
+    -------
+    npt.NDArray[float]
+        A 2N vector of float
+    """
     return np.concatenate((np.real(z), np.imag(z)))
 
 
+@deprecated('Use new protocols')
 def _get_single_direction(
     qubit_specification: Sequence[pulses.QubitSpecification],
     real_to_sim_map: Mapping[int, int],
@@ -267,11 +429,16 @@ def _get_single_direction(
 
 @dataclasses.dataclass(frozen=True)
 class OptimizationTime:
+    """Collection of optimization times"""
     prep_time: float
+    """System preparation time"""
     optimization_time: float
+    """Optimization time"""
     energy_time: float
+    """Time to additional energy calculations"""
 
 
+@deprecated('Use new protocols')
 def gaussian_build_schedule(
     Np: int,
     default_values: Mapping[str, float | complex],
@@ -304,6 +471,7 @@ def gaussian_build_schedule(
     return _internal
 
 
+@deprecated('Use new protocols')
 def optimize_gaussian(
     dt: float,
     qubit_specification: Sequence[pulses.QubitSpecification],
@@ -475,10 +643,15 @@ def optimize_gaussian(
 
 @dataclasses.dataclass(frozen=True)
 class TimingConstraints:
+    """Timeing constraints for a given system"""
     acquire_alignment: int
+    """Acquire alignment"""
     granularity: int
+    """Granularity"""
     min_length: int
+    """Minimal pulse length"""
     pulse_alignment: int
+    """Pulse alignment"""
 
     @classmethod
     def from_backend(
@@ -486,6 +659,21 @@ class TimingConstraints:
         backend: qiskit.providers.backend.Backend,
         ignore_min: bool = False,
     ) -> TimingConstraints:
+        """
+        Derive timing constraints from Backend
+
+        Parameters
+        ----------
+        backend: qiskit.providers.backend.Backend
+            Backend to use
+        ignore_min: bool
+            Ignore minimal pulse length? Defaults to False
+
+        Returns
+        -------
+        TimingConstraints
+            The timing constraints of the backend
+        """
         options = backend.configuration().timing_constraints
         return cls(
             acquire_alignment=options.get("acquire_alignment", 1),
@@ -501,14 +689,53 @@ class TimingConstraints:
 
     def get_length(self: TimingConstraints, length: int) -> int:
         # TODO find potential fix to this weird behavior
+        """
+        Get the "new" length according to the timeing constraints
+
+        Parameters
+        ----------
+        length: int
+            Length
+
+        Returns
+        -------
+        int
+            The new length
+        """
         nv = int(length + self.granularity - 1)
         return nv - nv % self.granularity
         return self._get_close_multiple(length, self.granularity)
 
     def fix_min(self: TimingConstraints, length: int) -> int:
+        """
+        Get the "new" length according to minimal length
+
+        Parameters
+        ----------
+        length: int
+            Length
+
+        Returns
+        -------
+        int
+            The new length
+        """
         return max(length, self.min_length)
 
     def get_delta(self: TimingConstraints, time: int) -> int:
+        """
+        Get fix to the pulse length according to the timing constraints
+
+        Parameters
+        ----------
+        time: int
+            Old length
+
+        Returns
+        -------
+        int
+            The delta to adhere to timing constraints
+        """
         lcm = np.lcm(self.acquire_alignment, self.pulse_alignment)
         return self._get_close_multiple(time, lcm)
 
@@ -519,19 +746,40 @@ STANDARD_TIMING = TimingConstraints(
     min_length=64,
     pulse_alignment=1,
 )
+"""Default timing constraints of previous era IBM devices."""
 
 
 class PaddingType(enum.Enum):
+    """Padding type of the pulse"""
     NO = enum.auto()
+    """No padding at all"""
     LEFT = enum.auto()
+    """Pad the original pulse to the left, i.e., fill with zeros from the right"""
     RIGHT = enum.auto()
+    """Pad the original pulse to the right, i.e., fill with zeros from the left"""
     MIDDLE = enum.auto()
+    """Pad the original pulse to the middle, i.e., fill with zeros from both sides"""
 
     def pad(
         self: PaddingType,
-        values: npt.ArrayLike,
+        values: npt.NDArray,
         timing_const: TimingConstraints = STANDARD_TIMING,
-    ) -> npt.NDArray[complex]:
+    ) -> npt.NDArray[np.complex_]:
+        """
+        Pad the given pulse accordingly
+
+        Parameters
+        ----------
+        values: npt.NDArray
+            Some array of values
+        timing_const: TimingConstraints
+            The timing constraints. Defaults to the `STANDARD_TIMING`
+
+        Returns
+        -------
+        npt.NDArray[np.complex_]
+            The padded array
+        """
         if self == self.NO:
             return np.asarray(values, dtype=complex)
         cur_len = len(values)
@@ -549,6 +797,7 @@ class PaddingType(enum.Enum):
         return ret
 
 
+@deprecated('Will replace with something more robust')
 def create_empty_solution(
     Nt: int,
     dt: float,
@@ -565,6 +814,43 @@ def create_empty_solution(
     timing_const: Optional[TimingConstraints] = None,
     **kwargs,
 ) -> tuple[CI_MatrixSolution, OptimizationTime]:
+    """
+    Generate an empty `CI_MatrixSolution` object to "continue" optimizing from.
+
+    Parameters
+    ----------
+    Nt: int
+        Number of parameters
+    dt: float
+        Sampling rate
+    qubit_specification: Sequence[QubitSpecification]
+        The qubits used
+    ci_matrix: CI_Matrix
+        The CI matrix to solve
+    cross_talk: bool
+        Was qubits connected? Defaults to True
+    qubit_noise_model: Sequence[QubitNoiseParameters] | None
+        The qubit noise model, if present. Defaults to None
+    t_span: tuple[float, float] | None
+        The time to simulate, if None calculate accordingly. Defaults to None
+    y0: QISKIT_STATE | None
+        The initial state used, if None use |0> for all qubits. Defaults to None
+    single_connection: bool
+        Was the qubit connection bi- or uni-directional? Defaults to False (Bi-directional)
+    complex_amplitude: bool
+        Was the amplitude complex? Defaults to True
+    random_initial_pulse: bool
+        Was the initial pulse randomized? Defaults to True
+    padding_type: PaddingType
+        The padding used
+    timing_const: TimingConstraints
+        The timing constraints used
+
+    Returns
+    -------
+    tuple[CI_MatrixSolution, OptimizationTime]
+        The solution and the time it took to generate it
+    """
     s = time.time()
 
     solver, q_map, ch_map, signal_maker = pulses.generate_solver(
@@ -632,6 +918,7 @@ def create_empty_solution(
 
 
 # TODO divide the function to several smaller ones and add a call manager
+@deprecated('Use newer version in other modules')
 def optimize(
     Nt: int,
     dt: float,
@@ -863,6 +1150,26 @@ S = TypeVar("S", DensityMatrix, Statevector)
 
 
 def project01(n_qubits: int, transmon_dim: int) -> Callable[[S], S]:
+    """
+    Generate a function to convert a multi Transmon quantum state to a multi-qubit quantum state
+
+    Parameters
+    ----------
+    n_qubits: int
+        Number of qubits
+    transmon_dim: int
+        Transmon dimensionality
+
+    Returns
+    -------
+    Callable[[S], S]
+        Function to convert multi Transmon quantum state to a multi-qubit quantum state
+
+    Raises
+    ------
+    NotImplementedError:
+        If trying to use an oddly shaped object
+    """
     proj_01 = np.array(
         [
             np.concatenate(([1], np.repeat(0, transmon_dim - 1))),
@@ -890,6 +1197,7 @@ def project01(n_qubits: int, transmon_dim: int) -> Callable[[S], S]:
 
 
 # TODO Think of maybe doing it better, for now, this will do
+@deprecated('Use newer versions in sub modules')
 def optimize_transmon(
     Nt: int,
     dt: float,

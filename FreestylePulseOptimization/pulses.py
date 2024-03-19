@@ -1,3 +1,4 @@
+"""Module to get the various features of the qubits from a Backend"""
 import datetime
 import qiskit
 import qiskit.quantum_info
@@ -8,7 +9,7 @@ import numpy as np
 from numpy import typing as npt
 import dataclasses
 from typing import Callable, Literal, Optional, TypeAlias
-from collections.abc import Sequence, Iterable, Mapping
+from collections.abc import Iterator, Sequence, Iterable, Mapping
 
 from .protocols import DeviceParameterBackend, NoiseParameterBackend
 
@@ -17,8 +18,10 @@ FREQ_FUNCTIONS: Mapping[str, Callable[[float, float], float]] = {
     "ONLY_SECOND": lambda x, y: y,
     "ONLY_FIRST": lambda x, y: x,
 }
+"""Various functions to calculate the frequency shifts of the control channels"""
 
 DEFAULT_FREQ_OF_CONTROL: Callable[[float, float], float] = FREQ_FUNCTIONS["DIFFERENCE"]
+"""The default function is 'DIFFERENCE'"""
 
 
 # %%
@@ -31,13 +34,24 @@ class QubitSpecification:
     """
 
     index: int
+    """The qubit index"""
     freq: float
+    """The base frequency"""
     delta: float
+    """The anharmonicity of the Transmon"""
     rabi: float
+    """The Rabi coupling"""
     coupling_map: Mapping[int, float] = dataclasses.field(default_factory=dict)
+    """The coupling mapping of this qubit"""
     control_channels: Mapping[int, int] | None = None
+    """The indices of the various control channels of this qubit"""
 
     def __iter__(self):
+        """
+        Returns an iterator version of this object
+
+        Returns the features in the following order (index, frequency, anharmonicity, Rabi, coupling map)
+        """
         return iter((self.index, self.freq, self.delta, self.rabi, self.coupling_map))
 
 
@@ -99,7 +113,7 @@ def get_device_parameters(
 
     Parameters
     ----------
-    backend : qiskit.providers.Backend
+    backend : DeviceParameterBackend
         The backend to get the information from.
     qubits : Sequence[int] | int
         What qubit(s) to get data for
@@ -176,6 +190,7 @@ SIGNAL_MAKER_TYPE: TypeAlias = Callable[
     [qiskit.pulse.Schedule | qiskit.pulse.ScheduleBlock],
     Sequence[qd.signals.signals.Signal],
 ]
+"""Base protocol for a schedule to signal transformer function"""
 
 
 def get_frequencies(
@@ -183,6 +198,25 @@ def get_frequencies(
     real_to_sim_map: Mapping[int, int],
     control_map: Mapping[tuple[int, int], int],
 ) -> Mapping[str, float]:
+    """
+    Get the frequencies of each channel from the qubit specification
+
+    Return the relevant channel frequencies from the given qubit specification, real to simulation mapping and control channel mapping
+
+    Parameters
+    ----------
+    qubit_specifications
+        The qubits to consider
+    real_to_sim_map
+        A mapping of the "real" to simulation qubit indices
+    control_map
+        The control channel mapping
+
+    Returns
+    -------
+    Mapping[str, float]
+        The mapping of each relevant channel
+    """
     car_freq = {f"d{qubit.index}": qubit.freq for qubit in qubit_specifications}
     control_channels: dict[str, str] = {}
     for qubit in qubit_specifications:
@@ -266,21 +300,47 @@ def _convert_schedule_to_signal_maker(
     return _internal
 
 
+# TODO Continue from here
 @dataclasses.dataclass(frozen=True)
 class QubitNoiseParameters:
+    """Dataclass of a qubit's noise properties"""
+
     index: int
+    """The qubit's index"""
     T1: Optional[float]
+    """T1 - Time for depolarization process"""
     T2: Optional[float]
+    """T2 - Time for dephasing process"""
     # TODO consider more noise types ?
 
     @property
     def gamma1(self) -> float | None:
+        """
+        Get the coefficient for depolarization process in the Lindbladian, $\gamma_1$.
+
+        If T1 is not None, return the coefficient for the depolarization process for the Lindbladian, $\gamma_1=1/T_1$.
+
+        Returns
+        -------
+        float | None
+            If T1 is not None, return $\gamma_1$
+        """
         if self.T1 is None:
             return None
         return 1 / self.T1
 
     @property
     def gamma2(self) -> float | None:
+        """
+        Get the coefficient for dephasing process in the Lindbladian, $\gamma_2$.
+
+        If T2 is not None, return the coefficient for the dephasing process for the Lindbladian, $\gamma_2=1/T_2$.
+
+        Returns
+        -------
+        float | None
+            If T2 is not None, return $\gamma_2$
+        """
         if self.T2 is None:
             return None
         return 1 / self.T2
@@ -293,6 +353,30 @@ def get_qubit_noise_parameters(
     time_units: str = "ns",
     div_by_two_pi: bool = False,
 ) -> Sequence[QubitNoiseParameters]:
+    """
+    Extracts specific qubit noise parameters, namely, T1 and T2 times, from the backend.
+
+    Extracts specific qubit noise parameters from the backend and stores them in a `QubitNoiseParameters` object.
+    For each qubit, extract (1) the depolarization time, $T_1$; and (2) the dephasing time, $T_2$. Each missing property is given the value of `None`.
+
+    Parameters
+    ----------
+    backend: NoiseParameterBackend
+        The backend to get the information from.
+    qubits: Sequence[int] | int
+        What qubit(s) ti get data for.
+    freq_units: str
+        Frequency units. Defaults to "GHz".
+    time_units: str
+        Time units. Defaults to "ns".
+    div_by_two_pi: bool
+        Divide units by 2π? Defaults to True.
+
+    Returns
+    -------
+    Sequence[QubitNoiseParameters]
+        Returns a list of `QubitNoiseParameters`.
+    """
     assert freq_units.lower().endswith(
         "hz"
     ), f"I do not know these frequency units! {freq_units}"
@@ -334,7 +418,8 @@ def get_qubit_noise_parameters(
     return ret
 
 
-METHODS: TypeAlias = Literal["qubit"] | Literal["transmon"] | Literal["qubit-dicke"]
+METHODS: TypeAlias = Literal["qubit","transmon","transmon-dicke"]
+"""Currently supported simulation methods."""
 
 
 # TODO Add overload typehints
@@ -348,6 +433,45 @@ def generate_solver(
 ) -> tuple[
     qd.Solver, Mapping[int, int], Mapping[tuple[int, int], int], SIGNAL_MAKER_TYPE
 ]:
+    """
+    Generate a solver for the given system parameters.
+
+    For (1) a given qubit properties and topology, specified in `qubit_specification`; (2) noise parameters given in `qubit_noise_model`; (3) `dt` sampling time; (4) `cross_talk` control whether the qubits are connected; and (5) what `method` to use to generate the solver.
+
+    Currently support the following methods:
+        - 'qubit' - Simulate each qubit as a qubit;
+        - 'transmon' - Simulate each qubit as a Tranmon;
+        - 'transmon-dicke' - Simulate each qubit as a Transmon with Dicke model like interactions.
+
+    Each method may use some additional parameters
+     - method == 'qubit' - No additional parameters;
+     - method == 'transmon' | 'transmon_dicke' - 'transmon_dim' the dimensionality of each Transmon. Defaults to 5.
+
+    Parameters
+    ----------
+    qubit_specification: Sequence[QubitSpecification]
+        The qubits specifications.
+    dt: float
+        The sampling rate.
+    cross_talk: bool
+        Connect the qubits
+    qubit_noise_model: Sequence[QubitNoiseParameters]|None
+        The qubits' noise parameters, can be None to simulate without noise.
+    method: METHODS
+        The simulation method. Defaults to 'qubit'
+
+    Returns
+    -------
+    tuple[
+     qd.Solver, Mapping[int, int], Mapping[tuple[int, int], int], SIGNAL_MAKER_TYPE
+    ]
+        Returns a tuple of: (1) solver, (2) mapping from real index to simulation index, (3) mapping from a pair of qubit indices to the appropriate control channel index, and (4) a function to convert a `Schedule`|`ScheduleBlock` to list[Signal].
+
+    Raises
+    ------
+    NotImplementedError:
+        If the method is not supported.
+    """
     if method == "qubit":
         return generate_solver_qubit(
             qubit_specification, dt, cross_talk, qubit_noise_model
@@ -372,6 +496,27 @@ def compose_space(
     place_operators: Optional[Mapping[int, npt.NDArray[np.complex_]]] = None,
     I: Optional[npt.NDArray[np.complex_]] = None,
 ) -> npt.NDArray[np.complex_]:
+    """
+    Compose various single-qubit operators to a multi-qubit operator.
+
+    Compose a given set of single-qubit operators to a multi-qubit operator.
+
+    Parameters
+    ----------
+    N: int
+        The total number of qubits in the system.
+    dim: int
+        The dimensionality of each qubit in the system.
+    place_operators: Mapping[int, npt.NDArray[np.complex_]] | None
+        A mapping of qubit index to operator, can be `None` to get the identity operator.
+    I: npt.NDArray[np.complex_] | None
+        The identity operator for a single-qubit system, can be `None` to generate from the `dim` parameters.
+
+    Returns
+    -------
+    npt.NDArray[np.complex_]
+        The multi-qubit operator.
+    """
     if I is None:
         I = np.eye(dim).astype(complex)
     ret: npt.NDArray[np.complex_] = np.array(1, dtype=complex)
@@ -546,6 +691,7 @@ def generate_solver_transmon(
     )
 
 
+# TODO verify this is needed...
 def generate_solver_transmon_dicke(
     qubit_specifications: Sequence[QubitSpecification],
     dt: float,
